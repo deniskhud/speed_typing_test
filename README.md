@@ -1,0 +1,1 @@
+So far, this is a prototype of a speed typing test program.
