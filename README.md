@@ -1,1 +1,1 @@
-So far, this is a prototype of a speed typing test program.
+This is a program to test your fast typing skills. I used the sfml library to display the window
