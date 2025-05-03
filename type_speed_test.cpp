@@ -28,13 +28,13 @@ int main()
 {
     
     setlocale(LC_ALL, "ru");
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Test");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "speed typing test");
     window.setFramerateLimit(60);
     window.setMouseCursorVisible(false);
     if (!window.hasFocus()) {
         window.requestFocus();
     }
-    
+
     // Создание объекта шрифта
     sf::Font font;
     if (!font.loadFromFile("C:\\Windows\\Fonts\\arial.ttf")) {
@@ -58,12 +58,13 @@ int main()
     }
     
     sf::Text wordsText("", font, 30);
-    wordsText.setPosition(50, 100);
+    wordsText.setOrigin(wordsText.getLocalBounds().width / 2, wordsText.getLocalBounds().height / 2);
+    wordsText.setPosition(window.getSize().x / 2, window.getSize().y - 500);
     wordsText.setFillColor(sf::Color::White);
 
     string typedWord = ""; // Храним введенное слово
     sf::Text typedText("", font, 30);
-    typedText.setPosition(50, 200);
+    typedText.setPosition(window.getSize().x / 2, window.getSize().y - 450);
     typedText.setFillColor(sf::Color::Green);
 
     //information 
@@ -75,6 +76,9 @@ int main()
 
 
     int chars_per_min = 0;  //count chars per minute 
+
+    int correctChars = 0;             // <--- Количество правильно введённых символов
+    int totalTypedChars = 0;
 
     sf::Text charsPerMin("", font, 30);
     charsPerMin.setPosition(50, 400);
@@ -89,10 +93,18 @@ int main()
     
     //time
     sf::Clock gameClock;
-    sf::Time totalTime = sf::seconds(30);   //timer
+    sf::Time totalTime = sf::seconds(10);   //timer
     sf::Text timerText("", font, 24);
     timerText.setPosition(50, 20);  //pos
     timerText.setFillColor(sf::Color::Red); //color
+
+
+
+    bool isTimeUp = false; // Флаг: закончилось ли время
+
+    sf::Text resultText("Time's up! Final results:", font, 40); // Заголовок результата
+    resultText.setFillColor(sf::Color::Yellow);
+    resultText.setPosition(50, 200);
 
     // Главный игровой цикл
     while (window.isOpen())
@@ -103,9 +115,10 @@ int main()
         {
             if (event.type == sf::Event::Closed)
                 window.close();
-
+            
             // Проверка на нажатие клавиш
             if (event.type == sf::Event::TextEntered) {
+                if (isTimeUp) continue;
                 // Если нажата клавиша
                 if (event.text.unicode == 8) { // Backspace
                     if (!typedWord.empty()) {
@@ -116,14 +129,31 @@ int main()
                 //когда нажимаем пробел, кидает на новое слово
                 else if (event.text.unicode == 32) {  //space
                     if (!typedWord.empty()) {
+                        totalTypedChars += typedWord.length();
+
+                        // Подсчёт правильных символов по текущему слову
+                        const string& targetWord = currentWords[0];
+                        size_t correct = 0;
+                        for (size_t i = 0; i < min(typedWord.length(), targetWord.length()); ++i) {
+                            if (typedWord[i] == targetWord[i])
+                                ++correct;
+                        }
+                        correctChars += correct;  // <--- Увеличиваем число правильно введённых символов
+
                         if (typedWord == currentWords[0]) {
                             //++ words
                             words_per_min++;
                             chars_per_min += currentWords[0].length();
                         }
+                 
                         //Accuracy = (static_cast<double>(typedWord.length() / currentWords[0].length()) * 100.f);
                         currentWords.push_back(getRandomWord(words));
                         currentWords.erase(currentWords.begin());
+                            
+
+                        if (totalTypedChars > 0)
+                            Accuracy = static_cast<double>(correctChars) / totalTypedChars * 100.0;
+                        
                     }
                     
                
@@ -142,6 +172,7 @@ int main()
                 displayLine += w + " ";
             wordsText.setString(displayLine);
             typedText.setString(typedWord);
+           
 
             //обновление счетчика
             wordsPerMin.setString("words per min: " + to_string(words_per_min));
@@ -155,26 +186,31 @@ int main()
 
         if (remaining <= sf::Time::Zero) {
             timerText.setString("Time: 0");
-            window.close();  // Закрываем игру по истечении времени
+            isTimeUp = true; 
+              
         }
         else {
             int secondsLeft = static_cast<int>(remaining.asSeconds());
             timerText.setString("Time: " + std::to_string(secondsLeft));
         }
-
-        window.clear();
+      
+        
         window.draw(timerText);
         window.draw(wordsText);
         window.draw(typedText);
         window.draw(wordsPerMin);
         window.draw(charsPerMin);
         window.draw(accuracy);
+        
+        if (isTimeUp) {
+            window.draw(resultText); // Рисуем заголовок результатов
+        }
         window.display();
 
         // Очищаем окно
         window.clear();
+        
     }
 
-    
     return 0;
 }
