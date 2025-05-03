@@ -93,7 +93,7 @@ int main()
     
     //time
     sf::Clock gameClock;
-    sf::Time totalTime = sf::seconds(10);   //timer
+    sf::Time totalTime = sf::seconds(60);   //timer
     sf::Text timerText("", font, 24);
     timerText.setPosition(50, 20);  //pos
     timerText.setFillColor(sf::Color::Red); //color
